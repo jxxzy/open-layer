@@ -73,25 +73,25 @@ document.addEventListener('DOMContentLoaded', () => {
             })
         ],
         view: new ol.View({
-            center: ol.proj.fromLonLat([107.56976526667907,-6.893497430180786]), 
-            zoom: 15
+            center: ol.proj.fromLonLat([99.05754142360259,2.3342472445465083]), 
+            zoom: 14
         })
     });
 
 
       // Mendownload data waypoint, line string, dan polyline
       const waypointSource = new ol.source.Vector({
-        url: 'https://raw.githubusercontent.com/miqbalramadhan18/open-layer/main/polygon.json',
+        url: 'https://raw.githubusercontent.com/jxxzyshncyberoren/open-layer/main/polygon.json',
         format: new ol.format.GeoJSON()
     });
 
     const lineStringSource = new ol.source.Vector({
-        url: 'https://raw.githubusercontent.com/miqbalramadhan18/open-layer/main/polyline.json',
+        url: 'https://raw.githubusercontent.com/jxxzyshncyberoren/open-layer/main/polyline.json',
         format: new ol.format.GeoJSON()
     });
 
     const polylineSource = new ol.source.Vector({
-        url: 'https://raw.githubusercontent.com/miqbalramadhan18/open-layer/main/waypoint.json',
+        url: 'https://raw.githubusercontent.com/jxxzyshncyberoren/open-layer/main/waypoint.json',
         format: new ol.format.GeoJSON()
     });
 
