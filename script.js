@@ -1,202 +1,65 @@
 document.addEventListener("DOMContentLoaded", () => {
-    const pointTable = document.getElementById("pointTable").getElementsByTagName('tbody')[0];
-
-    fetch("waypoint.json") // Ganti "data.json" dengan nama file JSON Anda
-        .then(response => response.json())
-        .then(data => {
-            data.features.forEach(feature => {
-                if (feature.geometry.type === "Point") {
-                    const row = pointTable.insertRow();
-                    const nameCell = row.insertCell(0);
-                    const coordinatesCell = row.insertCell(1);
-                    const typeCell = row.insertCell(2);
-                    nameCell.innerText = feature.properties.name;
-                    coordinatesCell.innerText = JSON.stringify(feature.geometry.coordinates);
-                    typeCell.innerText = feature.geometry.type;
-                    
-                }
-            });
-        })
-        .catch(error => console.error("Terjadi kesalahan:", error));
-});
-
-document.addEventListener("DOMContentLoaded", () => {
-    const pointTable = document.getElementById("polygonTable").getElementsByTagName('tbody')[0];
-
-    fetch("polygon.json") // Ganti "data.json" dengan nama file JSON Anda
-        .then(response => response.json())
-        .then(data => {
-            data.features.forEach(feature => {
-                if (feature.geometry.type === "Polygon") {
-                    const row = pointTable.insertRow();
-                    const nameCell = row.insertCell(0);
-                    const coordinatesCell = row.insertCell(1);
-                    const typeCell = row.insertCell(2);
-                    nameCell.innerText = feature.properties.name;
-                    coordinatesCell.innerText = JSON.stringify(feature.geometry.coordinates);
-                    typeCell.innerText = feature.geometry.type;
-                    
-                }
-            });
-        })
-        .catch(error => console.error("Terjadi kesalahan:", error));
-});
-
-document.addEventListener("DOMContentLoaded", () => {
-    const pointTable = document.getElementById("polylineTable").getElementsByTagName('tbody')[0];
-
-    fetch("polyline.json") // Ganti "data.json" dengan nama file JSON Anda
-        .then(response => response.json())
-        .then(data => {
-            data.features.forEach(feature => {
-                if (feature.geometry.type === "LineString") {
-                    const row = pointTable.insertRow();
-                    const nameCell = row.insertCell(0);
-                    const coordinatesCell = row.insertCell(1);
-                    const typeCell = row.insertCell(2);
-                    nameCell.innerText = feature.properties.name;
-                    coordinatesCell.innerText = JSON.stringify(feature.geometry.coordinates);
-                    typeCell.innerText = feature.geometry.type;
-                    
-                }
-            });
-        })
-        .catch(error => console.error("Terjadi kesalahan:", error));
-});
-
-document.addEventListener('DOMContentLoaded', () => {
-    const map = new ol.Map({
-        target: 'map',
-        layers: [
-            new ol.layer.Tile({
-                source: new ol.source.OSM()
+    const datasets = [
+        ["pointTable", "waypoint.json", "Point"],
+        ["polygonTable", "polygon.json", "Polygon"],
+        ["polylineTable", "polyline.json", "LineString"]
+    ];
+    for (const [id, url, type] of datasets) {
+        const table = document.getElementById(id);
+        const body = table && table.tBodies[0];
+        if (!body) continue;
+        fetch(url)
+            .then(response => {
+                if (!response.ok) throw new Error("HTTP " + response.status);
+                return response.json();
             })
-        ],
+            .then(data => {
+                if (!Array.isArray(data.features)) throw new Error("GeoJSON features missing");
+                for (const feature of data.features) {
+                    if (!feature || !feature.geometry || feature.geometry.type !== type) continue;
+                    const row = body.insertRow();
+                    row.insertCell().textContent = (feature.properties && feature.properties.name) || "—";
+                    row.insertCell().textContent = JSON.stringify(feature.geometry.coordinates);
+                    row.insertCell().textContent = type;
+                }
+                if (!body.rows.length) {
+                    const cell = body.insertRow().insertCell();
+                    cell.colSpan = 3;
+                    cell.textContent = "Tidak ada data " + type;
+                }
+            })
+            .catch(error => {
+                body.textContent = "";
+                const cell = body.insertRow().insertCell();
+                cell.colSpan = 3;
+                cell.textContent = "Gagal memuat " + url + ": " + error.message;
+            });
+    }
+});
+
+document.addEventListener("DOMContentLoaded", () => {
+    if (typeof ol === "undefined") {
+        document.getElementById("map").textContent = "Pustaka OpenLayers gagal dimuat.";
+        return;
+    }
+    const map = new ol.Map({
+        target: "map",
+        layers: [new ol.layer.Tile({source: new ol.source.OSM()})],
         view: new ol.View({
-            center: ol.proj.fromLonLat([99.05754142360259,2.3342472445465083]), 
+            center: ol.proj.fromLonLat([99.05754142360259, 2.3342472445465083]),
             zoom: 14
         })
     });
-
-
-      // Mendownload data waypoint, line string, dan polyline
-      const waypointSource = new ol.source.Vector({
-        url: 'https://raw.githubusercontent.com/jxxzyshncyberoren/open-layer/main/polygon.json',
-        format: new ol.format.GeoJSON()
-    });
-
-    const lineStringSource = new ol.source.Vector({
-        url: 'https://raw.githubusercontent.com/jxxzyshncyberoren/open-layer/main/polyline.json',
-        format: new ol.format.GeoJSON()
-    });
-
-    const polylineSource = new ol.source.Vector({
-        url: 'https://raw.githubusercontent.com/jxxzyshncyberoren/open-layer/main/waypoint.json',
-        format: new ol.format.GeoJSON()
-    });
-
-    // Membuat layer untuk waypoint, line string, dan polyline
-    const waypointLayer = new ol.layer.Vector({
-        source: waypointSource,
-        style: new ol.style.Style({
-            image: new ol.style.Circle({
-                radius: 5,
-                fill: new ol.style.Fill({
-                    color: 'red'
-                })
-            })
-        })
-    });
-
-    const lineStringLayer = new ol.layer.Vector({
-        source: lineStringSource,
-        style: new ol.style.Style({
-            stroke: new ol.style.Stroke({
-                color: 'blue',
-                width: 2
-            })
-        })
-    });
-
-    const polylineLayer = new ol.layer.Vector({
-        source: polylineSource,
-        style: new ol.style.Style({
-            stroke: new ol.style.Stroke({
-                color: 'black',
-                width: 3    
-                
-            })
-        })
-    });
-
-    // Menambahkan layer ke peta
-    map.addLayer(waypointLayer);
-    map.addLayer(lineStringLayer);
-    map.addLayer(polylineLayer);
-
-    // Mendapatkan koordinat dari GeoJSON
-    const getCoordinates = (source) => {
-        const features = source.getFeatures();
-        const coordinates = features[0].getGeometry().getCoordinates();
-        return coordinates;
-    };
-
-    // Menampilkan koordinat di dalam tabel
-    waypointSource.once('change', () => {
-        const waypointCoords = getCoordinates(waypointSource);
-        document.getElementById('featureName').textContent = 'Waypoint';
-        document.getElementById('featureType').textContent = 'Point';
-        document.getElementById('featureCoords').textContent = waypointCoords.toString();
-    });
-
-    lineStringSource.once('change', () => {
-        const lineStringCoords = getCoordinates(lineStringSource);
-        document.getElementById('featureName').textContent = 'Line String';
-        document.getElementById('featureType').textContent = 'Line String';
-        document.getElementById('featureCoords').textContent = lineStringCoords.toString();
-    });
-
-    polylineSource.once('change', () => {
-        const polylineCoords = getCoordinates(polylineSource);
-        document.getElementById('featureName').textContent = 'Polyline';
-        document.getElementById('featureType').textContent = 'Polyline';
-        document.getElementById('featureCoords').textContent = polylineCoords.toString();
-    });
-});
-
-
-    // Menambahkan layer ke peta
-    map.addLayer(waypointLayer);
-    map.addLayer(lineStringLayer);
-    map.addLayer(polylineLayer);
-
-    // Mendapatkan koordinat dari GeoJSON
-    function getCoordinates(source) {
-        var features = source.getFeatures();
-        var coordinates = features[0].getGeometry().getCoordinates();
-        return coordinates;
+    const datasets = [
+        ["polygon.json", "Polygon", new ol.style.Style({stroke: new ol.style.Stroke({color: "black", width: 3}), fill: new ol.style.Fill({color: "rgba(0,0,0,0.1)"})})],
+        ["polyline.json", "LineString", new ol.style.Style({stroke: new ol.style.Stroke({color: "blue", width: 2})})],
+        ["waypoint.json", "Point", new ol.style.Style({image: new ol.style.Circle({radius: 5, fill: new ol.style.Fill({color: "red"})})})]
+    ];
+    for (const [url, type, style] of datasets) {
+        const source = new ol.source.Vector({url, format: new ol.format.GeoJSON()});
+        map.addLayer(new ol.layer.Vector({
+            source,
+            style: feature => feature.getGeometry() && feature.getGeometry().getType() === type ? style : undefined
+        }));
     }
-
-    // Menampilkan koordinat di dalam tabel
-    waypointSource.once('change', function() {
-        var waypointCoords = getCoordinates(waypointSource);
-        document.getElementById('featurename').textContent = 'Waypoint';
-        document.getElementById('featureType').textContent = 'Point';
-        document.getElementById('featureCoords').textContent = waypointCoords.toString();
-    });
-
-    lineStringSource.once('change', function() {
-        var lineStringCoords = getCoordinates(lineStringSource);
-        document.getElementById('featurename').textContent = 'Line String';
-        document.getElementById('featureType').textContent = 'Line String';
-        document.getElementById('featureCoords').textContent = lineStringCoords.toString();
-    });
-
-    polylineSource.once('change', function() {
-        var polylineCoords = getCoordinates(polylineSource);
-        document.getElementById('featurename').textContent = 'Polyline';
-        document.getElementById('featureType').textContent = 'Polyline';
-        document.getElementById('featureCoords').textContent = polylineCoords.toString();
-    });
-
-
+});
