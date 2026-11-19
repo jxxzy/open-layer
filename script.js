@@ -51,12 +51,15 @@ document.addEventListener("DOMContentLoaded", () => {
         })
     });
     const datasets = [
-        ["polygon.json", new ol.style.Style({stroke: new ol.style.Stroke({color: "black", width: 3}), fill: new ol.style.Fill({color: "rgba(0,0,0,0.1)"})})],
-        ["polyline.json", new ol.style.Style({stroke: new ol.style.Stroke({color: "blue", width: 2})})],
-        ["waypoint.json", new ol.style.Style({image: new ol.style.Circle({radius: 5, fill: new ol.style.Fill({color: "red"})})})]
+        ["polygon.json", "Polygon", new ol.style.Style({stroke: new ol.style.Stroke({color: "black", width: 3}), fill: new ol.style.Fill({color: "rgba(0,0,0,0.1)"})})],
+        ["polyline.json", "LineString", new ol.style.Style({stroke: new ol.style.Stroke({color: "blue", width: 2})})],
+        ["waypoint.json", "Point", new ol.style.Style({image: new ol.style.Circle({radius: 5, fill: new ol.style.Fill({color: "red"})})})]
     ];
-    for (const [url, style] of datasets) {
+    for (const [url, type, style] of datasets) {
         const source = new ol.source.Vector({url, format: new ol.format.GeoJSON()});
-        map.addLayer(new ol.layer.Vector({source, style}));
+        map.addLayer(new ol.layer.Vector({
+            source,
+            style: feature => feature.getGeometry() && feature.getGeometry().getType() === type ? style : undefined
+        }));
     }
 });
